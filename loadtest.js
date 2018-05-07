@@ -7,6 +7,7 @@ class Metrics {
     this.clients = []
     this.frames = []
     this.events = []
+    this.errors = []
   }
 
   addClient(client) {
@@ -15,6 +16,10 @@ class Metrics {
 
   addEvent(event) {
     this.events.push(event)
+  }
+
+  addError(error) {
+    this.errors.push(error)
   }
 
   removeClient(client) {
@@ -37,10 +42,12 @@ class Metrics {
     const frame = {
       clientCount: this.clients.length,
       eventCount: this.events.length,
+      errorCount: this.errors.length,
     }
 
     this.frames.push(frame)
     this.events = []
+    this.errors = []
 
     if (this.frames.length > 30) {
       this.frames.shift()
@@ -81,9 +88,9 @@ let nextId = 0
 function spawn(metrics) {
   nextId++
 
-  const client = request('http://localhost:8888/events').pipe(
-    new Stream(metrics)
-  )
+  const client = request('http://localhost:8888/events')
+    .on('error', error => metrics.addError(error))
+    .pipe(new Stream(metrics))
   metrics.addClient(client)
 }
 
@@ -97,15 +104,22 @@ function main() {
   const metrics = new Metrics()
   metrics.start()
   metrics.onFrame(frames => displayMetrics(frames))
-  setInterval(() => spawnGroup(50, metrics), 1000)
+  setInterval(() => spawnGroup(100, metrics), 1000)
 }
 
 function displayMetrics(frames) {
-  const clients = frames.map(frame => frame.clientCount)
-  const events = frames.map(frame => frame.eventCount)
+  const clients = padArray(frames.map(frame => frame.clientCount), 30)
+  const events = padArray(frames.map(frame => frame.eventCount), 30)
+  const errors = padArray(frames.map(frame => frame.errorCount), 30)
 
   console.log(Sparkline(clients, 'clients'))
   console.log(Sparkline(events, 'events/sec'))
+  console.log(Sparkline(errors, 'errors/sec'))
+}
+
+function padArray(items, count) {
+  var fill = Array.from({ length: count - items.length }).map(() => 0)
+  return fill.concat(items)
 }
 
 main()
