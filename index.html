@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, height=device-height" />
+  <title>Server-Sent Events Demo</title>
+  <style type="text/css">
+    body {
+      font-family: 'Open Sans', sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Server-Sent Events Demo</h1>
+
+  <ul></ul>
+
+  <script>
+    var ul = document.querySelector('ul');
+    var es = new EventSource('/events');
+    function li(text) {
+      var li = document.createElement('li');
+      li.innerText = text;
+      ul.appendChild(li);
+    }
+    es.addEventListener('open', function () {
+      li('Server connected :)');
+    });
+    es.addEventListener('my-custom-event', function (event) {
+      li(event.data);
+    });
+    es.addEventListener('error', function () {
+      li('Server unavailable :(');
+    });
+  </script>
+
+</body>
+
+</html>
