@@ -1,6 +1,7 @@
 const { Writable } = require('stream')
 const { Sparkline } = require('clui')
 const request = require('request')
+const fs = require('fs')
 
 class Metrics {
   constructor() {
@@ -27,7 +28,8 @@ class Metrics {
   }
 
   start() {
-    this.timer = setInterval(() => this.measure(), 1000)
+    let frame = 0
+    this.timer = setInterval(() => this.measure(++frame), 1000)
   }
 
   stop() {
@@ -38,8 +40,9 @@ class Metrics {
     this.handler = handler
   }
 
-  measure() {
+  measure(frameNumber) {
     const frame = {
+      frame: frameNumber,
       clientCount: this.clients.length,
       eventCount: this.events.length,
       errorCount: this.errors.length,
@@ -101,9 +104,16 @@ function spawnGroup(count, metrics) {
 }
 
 function main() {
+  const statsFile = 'stats.csv'
+  createCsv(statsFile)
+
   const metrics = new Metrics()
   metrics.start()
-  metrics.onFrame(frames => displayMetrics(frames))
+  metrics.onFrame(frames => {
+    displayMetrics(frames)
+    writeToCsv(statsFile, frames)
+  })
+
   setInterval(() => spawnGroup(100, metrics), 1000)
 }
 
@@ -115,6 +125,29 @@ function displayMetrics(frames) {
   console.log(Sparkline(clients, 'clients'))
   console.log(Sparkline(events, 'events/sec'))
   console.log(Sparkline(errors, 'errors/sec'))
+}
+
+function createCsv(file) {
+  fs.writeFile(file, 'Frame,Clients,Events/Sec,Errors/Sec\n', error => {
+    if (error) {
+      console.error('Error creating CSV')
+    }
+  })
+}
+
+function writeToCsv(file, frames) {
+  const frame = frames[frames.length - 1]
+  fs.appendFile(
+    'stats.csv',
+    `${frame.frame},${frame.clientCount},${frame.eventCount},${
+      frame.errorCount
+    }\n`,
+    error => {
+      if (error) {
+        console.error('Error writing frame to CSV')
+      }
+    }
+  )
 }
 
 function padArray(items, count) {
