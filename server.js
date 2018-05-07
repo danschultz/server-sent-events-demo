@@ -35,7 +35,7 @@ http
             thisConnection +
             ')\n\n'
         )
-      }, 2500)
+      }, 500)
 
       request.on('close', function() {
         console.log(

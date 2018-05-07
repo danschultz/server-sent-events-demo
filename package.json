@@ -1,0 +1,12 @@
+{
+  "name": "server-sent-events",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:danschultz/server-sent-events-demo.git",
+  "author": "Dan Schultz <schultz.t.dan@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "clui": "^0.3.6",
+    "request": "^2.85.0"
+  }
+}
